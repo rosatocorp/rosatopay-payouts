@@ -1,0 +1,82 @@
+package main
+
+import (
+	"bytes"
+	"encoding/json"
+	"fmt"
+	"io/ioutil"
+	"net/http"
+	"math/rand"
+	"time"
+)
+
+// Replace with your actual App ID and Secret Key
+const (
+	appID     = "YOUR_APP_ID"
+	secretKey = "YOUR_SECRET_KEY"
+)
+
+func generateRequestOrderId() string {
+	chars := "ABCDEFGHJKLMNOPQRSTUVWXYZ23456789"
+	stringLength := 6
+	randomString := make([]byte, stringLength)
+	rand.Seed(time.Now().UnixNano())
+
+	for i := 0; i < stringLength; i++ {
+		randomString[i] = chars[rand.Intn(len(chars))]
+	}
+
+	return "payout_" + string(randomString)
+}
+
+func main() {
+	// Rosatopay payout data
+	rosatopayPayoutData := map[string]interface{}{
+		"amount":           "1.00", // Use the amount with 2 decimals.
+		"currency":         "USD",
+		"purpose":          "cashback",
+		"type":             "crypto", // Currently only crypto is supported
+		"blockchain":       "bsc",    // Currently BSC, POLYGON, ETHEREUM is supported
+		"token":            "USDT",   // Currently USDT withdrawals are supported
+		"withdrawalAddress": "0x0000000000000000000000000000000000000000", // Change this to your withdrawal address
+	}
+
+	// Convert payout data to JSON
+	payoutDataJSON, err := json.Marshal(rosatopayPayoutData)
+	if err != nil {
+		fmt.Println("Error marshaling JSON:", err)
+		return
+	}
+
+	// Create a request with headers
+	req, err := http.NewRequest("POST", "https://payments.rosatopay.com/v1/payouts", bytes.NewBuffer(payoutDataJSON))
+	if err != nil {
+		fmt.Println("Error creating request:", err)
+		return
+	}
+
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Rosatopay-Payout-Idempotency", generateRequestOrderId())
+	req.Header.Set("appid", appID)
+	req.Header.Set("secretkey", secretKey)
+
+	// Create an HTTP client and send the request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		fmt.Println("Error sending request:", err)
+		return
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Println("Error reading response:", err)
+		return
+	}
+
+	// Print the response
+	fmt.Println(string(body))
+}
+
