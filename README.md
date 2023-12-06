@@ -1,4 +1,4 @@
-**Rosatopay's merchant payout sample code**
+**Rosatopay's merchant payout sample code for python**
 
 ## Basic steps to start
 
