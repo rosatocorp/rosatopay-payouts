@@ -1,4 +1,4 @@
-**Rosatopay's merchant payout sample code for Node.js**
+**Rosatopay's merchant payout sample code for PHP**
 
 ## Basic steps to start
 
