@@ -13,7 +13,7 @@ function generateRequestOrderId() {
         let rnum = Math.floor(Math.random() * chars.length);
         randomstring += chars.substring(rnum,rnum+1);
     }
-    return 'order_' + randomstring;
+    return 'payout_' + randomstring;
 }
 
 // set the view engine to ejs
@@ -28,14 +28,13 @@ app.get('/', function(req, res) {
 
 app.get('/payout', function(req, res) {
   var rosatopayPayoutData = {
-      "amount": "10.00",
+      "amount": "1.00", //Use the amount with 2 decimals.
       "currency": "USD",
       "purpose": "cashback",
-      "queue_if_low_balance": false,
-      "type": "crypto",
-      "blockchain": "bsc",
-      "token": "USDT",
-      "withdrawalAddress": "0x0000000000000000000000000000000000000000"
+      "type": "crypto", //Currently only crypto is supported
+      "blockchain": "bsc", //Currently BSC, POLYGON, ETHEREUM is supported
+      "token": "USDT", //Currently USDT withdrawals are supported
+      "withdrawalAddress": "0x0000000000000000000000000000000000000000" //Change this to your withdrawal address, or else this will withdraw to this black hole address.
     }
 
     var options = {
@@ -53,10 +52,13 @@ app.get('/payout', function(req, res) {
 
 
   request( options, function( err, response, body ) {
-    if( body && body.id ) {
-      res.send('SUCCESSFUL PAYOUT');
-    } else {
-      res.send('FAILED PAYOUT, PLEASE CHECK APP_ID AND SECRET KEY...');
+    if( body ) {
+      if( body.error ) {
+        res.send(body.reason);
+      } else {
+        console.log('Payout was successful via Rosatopay');
+        res.send(body);
+      }
     }
   });
 });
